@@ -1,0 +1,29 @@
+﻿@using IdentityExample.Models
+@model IdentityExample.Models.CurrentLoggedDataViewModel
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+
+  <h1> Witaj w aplikacji Transport Support</h1> 
+    
+
+
+@if (User.Identity.IsAuthenticated)
+{
+    <div class="row">
+        <div class="col-md-6">
+            <h2>Jesteś zalogowany jako: @Model.UserName</h2>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-6">
+            <h2>Nie jesteś zalogowany</h2>
+        </div>
+    </div>
+}
+
+

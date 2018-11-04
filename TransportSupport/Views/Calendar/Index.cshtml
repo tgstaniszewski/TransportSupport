@@ -1,0 +1,515 @@
+﻿@using System.Security.Cryptography.X509Certificates
+@using TransportSupport.Models
+@model Track
+
+
+
+<style>
+    /*body{
+        background-image: url("images/thumb-1.jpg");
+    }*/
+
+    #AddTracks {
+        position: static;
+        z-index: 0;
+        top: 80px;
+        left: 20px;
+        width: 300px;
+        padding: 0 10px;
+        border: 1px solid #ccc;
+        /*background: #eee;*/
+        border-radius: 0.5rem;
+        margin-top: 50px
+    }
+
+    #external-events {
+        position: static;
+        z-index: 0;
+        top: 300px;
+        left: 20px;
+        min-height: 150px;
+        width: 300px;
+        margin-top: 10px;
+        padding: 0 10px;
+        border: 1px solid #ccc;
+        /*background: #eee;*/
+        border-radius: 0.5rem
+    }
+
+        #external-events .fc-event {
+            margin: 1em 0;
+            cursor: pointer;
+        }
+
+
+    #calendar-container {
+        position: static;
+        z-index: 1;
+        width: auto;
+    }
+
+    #calendar {
+        min-width: 500px;
+        position: static;
+        height: auto
+    }
+
+
+    .fc-scroller {
+        overflow-y: hidden !important;
+    }
+
+    #template {
+        display: none;
+        background-color: pink
+    }
+
+    #trash {
+        width: 100%;
+    }
+
+    .fc-ltr .fc-axis {
+        background-image: linear-gradient(#6d94bf, #446E9B 50%, #3e648d);
+        color: white;
+        /*width: 40px !important;*/
+    }
+
+    .fc-day-header {
+        background-image: linear-gradient(#6d94bf, #446E9B 50%, #3e648d);
+        color: white;
+    }
+
+    #title {
+        font-weight: bolder;
+        text-align: center;
+        font-family: "Lucida Grande",Helvetica,Arial,Verdana,sans-serif;
+        font-size: 14px;
+    }
+</style>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar-scheduler/1.9.4/scheduler.min.css" />
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" />
+
+
+
+<h1>Kalendarz Frachtów</h1>
+
+<div class="container" >
+    <div class="row backgroundInput">
+        <div class="col-lg-4">
+            <div id="AddTracks" class="form-group container">
+                <header id="title">Dodaj fracht</header>
+
+                <p class="container ">
+
+                    @Html.LabelFor(x => x.ID, "Wybierz Trase:")
+                    <select id="selectTracksCustomer" multiple="multiple" class="form-control"></select>
+
+                    @Html.LabelFor(x => x.ContractorID, "Wybierz Zleceniodawcę:")
+                    <select id="selectCustomer" selected="selected" class="form-control" asp-items="ViewBag.contractor"></select>
+
+                    <button class="btn btn-block btn-primary" id="AddTrack">Dodaj</button>
+                </p>
+            </div>
+            <div id="tracks">
+
+                <div id="template" class="fc-event"></div>
+                <div class="form-group container" id="external-events">
+                    <header id="title">Trasy</header>
+                </div>
+
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div id="calendar-container" style="width: 100%; height: 100%">
+                <div id="calendar"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+@section Scripts
+    {
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/locale-all.js"></script>
+
+    <script>
+
+        //funkcja losowania koloru
+        function getRandomColor() {
+            var letters = '0123456789ABCDEF';
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        //funkcja dla wybierz kontrahenta i dodania tras do przeciągania
+        function TrackCustomer() {
+            var buttonAdd = $('#AddTrack');
+            var customerSelect = $('#selectCustomer');
+            var trackCustomerSelect = $("#selectTracksCustomer");
+            trackCustomerSelect.on("click", "option", function () {
+                trackCustomerSelect.selected = $(this);
+            });
+            //dodanie listy tras do pola wyboru dla konkretnego contrahenta
+            customerSelect.on('change',
+                function () {
+
+                    $('#selectTracksCustomer').empty();//czyszczenie pola z trasami kontrahenta
+                    $.ajax({
+                        url: `Calendar/TracksCustomer/${customerSelect.val()}`,
+                        type: "GET",
+                        contentType: 'application/json',
+                        success: function (data) {
+
+                            $.each(data, function () {
+
+                                var option = document.createElement("option");
+                                option.text = this.name /*+ " " + customerSelect.text*/;
+                                option.value = this.id;
+                                trackCustomerSelect.append(option);
+
+                            });
+
+                        },
+                        error: function () {
+
+                        }
+                    });
+
+                });
+
+            //przycisk dodania diva trasy
+            buttonAdd.on('click',
+                function () {
+
+                    var templeDivTrack = $('#template');
+
+                    var containerTrack = $('#external-events');
+
+                    //tablica na zaznaczone trasy i uzupełnienie tablicy zaznaczonymi trasami
+                    var selectedTracks = [];
+                    $.each($("#selectTracksCustomer option:selected"), function () {
+                        selectedTracks.push($(this).val());
+                    });
+
+
+                    //dodanie div do kontenera na eventy
+                    selectedTracks.forEach(function (element) {
+                        $.ajax({
+                            url: `Calendar/Tracks/${element}`,
+                            type: "GET",
+                            contentType: 'application/json',
+                            success: function (item) {
+
+                                console.log(item);
+                                var newDivTrack = templeDivTrack.clone(true);
+                                var color = getRandomColor();
+                                //console.log(newDivTrack);
+                                newDivTrack.removeAttr("id");
+
+                                newDivTrack.css("display", "");
+                                newDivTrack.attr("data-duration", item[0].time);
+                                newDivTrack.css("background-color", color);
+                                newDivTrack.attr("data-color", color);
+                                newDivTrack.attr("data-idTrack", item[0].id);
+                                newDivTrack.attr("data-title", item[0].name);
+                                newDivTrack.text(item[0].name);
+
+
+                                containerTrack.append(newDivTrack);
+
+                                // initialize the external events
+                                // ----------------------------------------------------------------
+                                var bind = function (element) {
+
+                                    // store data so the calendar knows to render an event upon drop
+                                    $(element).data('event',
+                                        {
+                                            title: $(element).data('title'), // ustawienie tytułu
+                                            stick: true, // Utrzymywanie eventu gdy użytkowni nawiguje
+                                            color: $(element).data('color')// ustawienie koloru
+
+                                        });
+
+                                    // make the event draggable using jQuery UI
+
+
+                                    $(element).draggable({
+
+                                        zIndex: 100,
+                                        revert: true, // will cause the event to go back to its
+                                        revertDuration: 0 //  original position after the drag
+                                    });
+
+                                };
+
+                                bind(newDivTrack);
+                            },
+                            error: function () {
+                                containerTrack.empty();
+                            }
+                        });
+
+                    });
+
+                });
+
+
+        }
+
+        $(document).ready(function () {
+
+            // załądowanie funkcji dla wybierz kontrahenta i dodania tras do przeciągania
+            TrackCustomer();
+
+
+            //fullcalnedar init and logika
+            $(function () {
+
+                var calendar = $('#calendar');
+                calendar.fullCalendar({
+
+                    themeSystem: 'bootstrap4',
+                    defaultView: 'agendaWeek',
+                    allDaySlot: false,
+
+                    header: {
+                        left: 'prev,next',
+                        center: 'title',
+                        right: 'agendaDay,agendaWeek,month'
+                    },
+
+                    locale: 'pl',
+
+                    slotLabelFormat: "HH:mm",
+                    //ładowanie zapisanych eventów z bazy danych do kalendarza
+                    events: function (start, end, timezone, callback) {
+
+                        $.ajax({
+                            type: "GET",
+                            url: "/api/Freights/",
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            success: function (data) {
+
+                                var arrayEvents = data;
+                                var events = [];
+
+                                $.each(arrayEvents, function () {
+
+                                    events.push({
+                                        id: this.id,
+                                        title: this.description,
+                                        start: this.startTime,
+                                        end: this.endTime,
+                                        trackId: this.trackId,
+                                        color: getRandomColor()
+                                    });
+                                });
+
+                                callback(events);
+
+                            },
+                            error: function (data) {
+                                console.log("błąd odbioru Eventów" + data);
+                            }
+                        });
+
+                    },
+
+                    contentHeight: "auto",
+                    editable: true,
+                    droppable: true,
+
+                    //pierwsze upuszcenie bloku eventu na kalendarzu + zapis do bazy
+                    drop: function (date, jsEvent, ui, resourceId) {
+                                              
+                        var endTime = date.clone().add(moment.duration(ui.helper[0].dataset.duration))
+                            .format("YYYY/MM/DD HH:mm:ss");
+                        var startTime = date.format("YYYY/MM/DD HH:mm:ss");
+                        var trackId = parseInt(ui.helper[0].dataset.idtrack);
+                        var title = ui.helper[0].dataset.title;
+
+                        var freight = {
+
+                            Description: title,
+                            EndTime: endTime,
+                            StartTime: startTime,
+                            TrackId: trackId
+                        };
+                        console.log(event);
+
+                        $.ajax({
+                            type: "POST",
+                            url: "api/Freights/",
+                            data: JSON.stringify(freight),
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            success: function (data) {
+                                                                                                                               
+                                var tab = calendar.fullCalendar("clientEvents");// tablica eventów zapisanych po stronie klienta(fullcalendar)
+                                var lastEvent = tab[tab.length - 1];//ostatni zapisany event
+                                lastEvent.id = data.value;//nadanie id zwróconego z bazy danych
+                                calendar.fullCalendar('updateEvent', lastEvent);// update eventu(dodanie id)
+                            },
+                            error: function (data) {
+                                console.log("Błąd zapisu frachtu");
+                            }
+                        });
+
+                    },
+
+
+                    eventClick: function (calEvent, jsEvent, view) {
+
+                        alert('Kurs: ' + calEvent.title + ' \nRozpoczyna się o: ' + calEvent.start.format("YYYY/MM/DD HH:mm:ss") + ' \nkończy się o: ' + calEvent.end.format("YYYY/MM/DD HH:mm:ss"));
+                        console.log(calEvent);
+                    },
+
+                    //upuszczenie eventu w inne miejsce niż począdkowe(update czasu)
+                    eventDrop: function (event, delta, revertFunc, jsEvent, ui, view) {
+
+                        var idFraight = event.id;
+                        var endTime = event.end.format("YYYY/MM/DD HH:mm:ss");
+                        var startTime = event.start.format("YYYY/MM/DD HH:mm:ss");
+                        var trackId = event.trackId;
+                        var title = event.title;
+
+                        var freightChangeTime = {
+                            ID: idFraight,
+                            TrackId: trackId,
+                            EndTime: endTime,
+                            StartTime: startTime,
+                            Description: title
+                        };
+
+                        if (!confirm("Kurs " +
+                            event.title +
+                            " rozpoczyna się teraz " +
+                            event.start.format("YYYY/MM/DD HH:mm:ss") +
+                            " \nCzy napewno chcesz zmienić?")) {
+                            revertFunc();
+                        }
+                        else {
+
+                            $.ajax({
+                                type: "PUT",
+                                url: `api/Freights/${idFraight}`,
+                                data: JSON.stringify(freightChangeTime),
+                                contentType: "application/json; charset=utf-8",
+                                dataType: "json",
+
+                                success: function () {
+
+                                    console.log("aktualizowano  fracht po przeciągnięciu");
+                                },
+                                error: function () {
+                                    console.log("błąd aktualizacji frachtu po przeciągnięciu");
+                                }
+                            });
+                        }
+
+
+                    },
+
+                    eventResize: function (event, delta, revertFunc) {
+
+                        var idFraight = event.id;
+                        var endTime = event.end.format("YYYY/MM/DD HH:mm:ss");
+                        var startTime = event.start.format("YYYY/MM/DD HH:mm:ss");
+                        var trackId = event.trackId;
+                        var title = event.title;
+
+                        var freightChangeEndTime = {
+                            ID: idFraight,
+                            TrackId: trackId,
+                            EndTime: endTime,
+                            StartTime: startTime,
+                            Description: title
+                        };
+
+
+                        if (!confirm("Kurs " + event.title + " kończy się teraz o : " + event.end.format("YYYY/MM/DD HH:mm:ss") + " \nCzy napewno chcesz zmienić?")) {
+                            revertFunc();
+                        }
+                        else {
+
+                            $.ajax({
+                                type: "PUT",
+                                url: `api/Freights/${event.id}`,
+                                data: JSON.stringify(freightChangeEndTime),
+                                contentType: "application/json; charset=utf-8",
+                                dataType: "json",
+
+                                success: function (data) {
+
+                                    console.log("aktualizowano  fracht po rozciągnięciu");
+
+                                },
+                                error: function (data) {
+                                    console.log("bład rozciągania eventu")
+                                    console.log(data);
+                                }
+                            });
+
+                        }
+
+                    },
+
+                    eventRender: function (event, element) {
+
+                        var button = document.createElement("button");
+                        button.classList.add("closeon", "btn-danger");
+                        button.id = "trash";
+                        button.innerHTML = "Usuń ";
+                        var trashIcon = document.createElement("i");
+                        trashIcon.className = "fas fa-trash-alt";
+                        button.append(trashIcon);
+
+                        element.find(".fc-content").prepend(button);
+                        element.find(".closeon").on('click', function (e) {
+                            e.stopPropagation();
+                            if (confirm('Usunąć "' + event.title + '"?')) {
+                                console.log(event);
+                                console.log(element);
+
+                                $.ajax({
+                                    type: "DELETE",
+                                    url: `api/Freights/${event.id}`,
+                                    contentType: "application/json; charset=utf-8",
+                                    dataType: "json",
+
+                                    success: function () {
+
+                                        $('#calendar').fullCalendar('removeEvents', event.id);
+
+                                    },
+                                    error: function () {
+                                        console.log("błąd usuwania eventu");
+                                    }
+                                });
+
+                            }
+
+                        });
+
+
+                    }
+
+                });
+
+            });
+
+        });
+    </script>
+
+}

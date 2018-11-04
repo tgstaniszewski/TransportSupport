@@ -1,0 +1,265 @@
+﻿@model TransportSupport.Models.Invoice
+
+
+<h2 class="btn-primary text-center">Utwórz nową fakturę</h2>
+
+<hr />
+<div>
+
+    <form asp-action="Create">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="row">
+
+            <div class="form-group col-xl-3">
+                <label asp-for="InvoiceNumber" class="control-label"></label>
+                <input id="numberInvoice" asp-for="InvoiceNumber" class="form-control" />
+                <span asp-validation-for="InvoiceNumber" class="text-danger"></span>
+            </div>
+            <div class="form-group col-xl-3">
+                <label asp-for="InvoiceDate" class="control-label"></label>
+                <input asp-for="InvoiceDate" class="form-control" value="@string.Format("{0:yyyy-MM-dd}", Model.InvoiceDate)" />
+                <span asp-validation-for="InvoiceDate" class="text-danger"></span>
+            </div>
+
+        </div>
+        <div class="row">
+
+            <div class="form-group col">
+
+                <label asp-for="CompanyId" class="control-label"></label>
+                <select asp-for="CompanyId" class="form-control " asp-items="ViewBag.Company"></select>
+
+            </div>
+
+            <div class="form-group col">
+
+                <label asp-for="ContractorId" class="control-label"></label>
+                <select id="contractorId" asp-for="ContractorId" class="form-control flex-fill" asp-items="ViewBag.Contractor">
+                    <option></option>
+                </select>
+
+            </div>
+
+            <div class="form-group col">
+
+                <label asp-for="MethodOfPayment" class="control-label"></label>
+                <select id="methodOfPaymentId" asp-for="MethodOfPayment" class="form-control flex-fill">
+                    <option></option>
+                    <option>Gotówka</option>
+                    <option>Przelew</option>
+                </select>
+
+            </div>
+
+
+        </div>
+
+        <div class="form-group">
+            <input id="createInvoice" type="submit" value="Utwórz fakturę" class="btn btn-success" />
+        </div>
+    </form>
+
+</div>
+
+<div class="text-center">
+    <table class="table backgroundInput">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">
+                    L.p
+                </th>
+                <th scope="col">
+                    Nazwa kursu
+                </th>
+                <th scope="col">
+                    J.M
+                </th>
+                <th scope="col">
+                    Ilość
+                </th>
+                <th scope="col">
+                    Cena jednostkowa
+                </th>
+                <th scope="col">
+                    Cena Netto
+                </th>
+                <th scope="col">
+                    VAT
+                </th>
+                <th scope="col">
+                    Kwota podatku
+                </th>
+                <th scope="col">
+                    Cena Brutto
+                </th>
+            </tr>
+        </thead>
+        <tbody id="freightTable"></tbody>
+    </table>
+</div>
+<div class="row   justify-content-between text-center">
+    <div class="col-5 offset-md-7">
+        <table class="table backgroundInput">
+            <thead class="thead-dark">
+                <tr scope="col mw-100">
+                    Zestawienie sprzedaży
+                </tr>
+                <tr>
+                    <th></th>
+                    <th scope="col">
+                        Cena Netto
+                    </th>
+                    <th scope="col">
+                        VAT
+                    </th>
+                    <th scope="col">
+                        Cena Brutto
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="tbodyTotal"></tbody>
+        </table>
+    </div>
+</div>
+<div>
+    <a class="btn btn-danger" asp-action="Index">Anuluj</a>
+</div>
+@section Scripts
+    {
+    <script>
+        $(document).ready(function () {
+
+            var contractorSelect = $('#contractorId'); // pole wyboru kontrahenta
+            var tbodyFreight = $('#freightTable'); //tabela z frachtami
+            var tbodyTotal = $("#tbodyTotal"); //tabela podsumowania
+            var buttonCreate = $("#createInvoice"); //przycisk dodawania faktury
+
+            //wybranie kontrahenta i wyświetlanie listy frachtów wraz z podsumowaniem!!!!
+            contractorSelect.on("change",
+                function () {
+                    var contractorId = contractorSelect.val();
+                    $.ajax({
+                        type: "GET",
+                        url: `GetFreightInvoicesNull/${contractorId}`,
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        //data: customerSelect.value,
+                        success: function (data) {
+                            var counter = 0;
+                            var totalNetto = 0; //suma netto do podsumowania
+                            var totalBrutto = 0; //suma Brutto do podsumowania
+
+                            var trTotal = document.createElement("tr");
+
+
+                            data.forEach(function (item) {
+                                //wybór ilości w zależnoći od jednostki miary
+                                var choiseAmount = function (item) {
+
+                                    if (item.unitOfMeasure === "szt") {
+                                        return 1;
+                                    } else if (item.unitOfMeasure === "/km") {
+
+                                        return item.distance;
+                                    }
+
+                                    return "";
+                                };
+
+                                //rekordy tabeli z frachtami
+                                var tr = document.createElement("tr");
+                                counter++;
+
+                                var lp = document.createElement("td");
+                                lp.innerHTML = counter;
+                                tr.append(lp);
+
+                                var name = document.createElement("td");
+                                name.innerHTML = item.name;
+                                tr.append(name);
+
+                                var unitOfMeasure = document.createElement("td");
+                                unitOfMeasure.innerHTML = item.unitOfMeasure;
+                                tr.append(unitOfMeasure);
+
+                                var amount = document.createElement("td");
+                                amount.innerHTML = choiseAmount(item);
+                                tr.append(amount);
+
+                                var price = document.createElement("td");
+                                price.innerHTML = item.price + " zł";
+                                tr.append(price);
+
+                                var priceNetto = document.createElement("td");
+                                priceNetto.innerHTML = item.price * choiseAmount(item) + " zł";
+                                totalNetto += item.price * choiseAmount(item);
+                                tr.append(priceNetto);
+
+                                var valueTax = document.createElement("td");
+                                valueTax.innerHTML = "23%";
+                                tr.append(valueTax);
+
+                                var tax = document.createElement("td");
+                                tax.innerHTML =
+                                    Math.round((item.price * 0.23 * choiseAmount(item)) * 100) / 100 + " zł";
+                                tr.append(tax);
+
+                                var priceBrutto = document.createElement("td");
+                                priceBrutto.innerHTML =
+                                    Math.round((item.price * choiseAmount(item) + (item.price * 0.23)) * 100) / 100 +
+                                    " zł";
+                                totalBrutto += item.price * choiseAmount(item) + (item.price * 0.23);
+                                tr.append(priceBrutto);
+
+                                tbodyFreight.append(tr);
+                            });
+
+                            //podsumowanie Tabeli
+                            var SumarryText = document.createElement("td");
+                            SumarryText.innerHTML = "Razem";
+                            trTotal.append(SumarryText);
+
+                            var netto = document.createElement("td");
+                            netto.innerHTML = totalNetto + " zł";
+                            trTotal.append(netto);
+
+                            var valueTax = document.createElement("td");
+                            valueTax.innerHTML = "23%";
+                            trTotal.append(valueTax);
+
+                            var brutto = document.createElement("td");
+                            brutto.innerHTML = totalBrutto + " zł";
+                            trTotal.append(brutto);
+
+                            tbodyTotal.append(trTotal);
+
+                        },
+                        error: function (data) {
+                            console.log("błąd odbioru frachtó do faktury" + data);
+                        }
+
+                    });
+
+
+                    $.ajax({
+                        type: "GET",
+                        url: `GetNumberIvoice`,
+                        contentType: "application/json; charset=utf-8",
+                        //data: customerSelect.value,
+                        success: function (data) {
+
+                            $("#numberInvoice").val(data);
+                        },
+                        error: function () {
+                            console.log("błąd odbioru numeru faktury");
+                        }
+
+
+                    });
+
+
+                });
+        });
+    </script>
+}
+

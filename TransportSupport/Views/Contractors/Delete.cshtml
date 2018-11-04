@@ -1,0 +1,50 @@
+﻿@model TransportSupport.Models.Contractor
+
+
+
+
+
+<h3 class="text-center btn-danger">Napewno chcesz usunąć?</h3>
+<div>
+    <h4 class="text-center">* usuniesz również wszytkie faktury i trasy dla usuwanego kontrahenta</h4>
+    <hr />
+    <dl class="dl-horizontal text-center">
+        <dt>
+            @Html.DisplayNameFor(model => model.Name)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Name)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Street)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Street)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.City)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.City)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.NIP)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.NIP)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Phone)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Phone)
+        </dd>
+    </dl>
+    
+    <form asp-action="Delete" class="text-center">
+        <input type="hidden" asp-for="ID" />
+        <input type="submit" value="Usuń" class="btn btn-danger" /> 
+        <a asp-action="Index" class="btn btn-primary">Anuluj</a>
+    </form>
+</div>
+

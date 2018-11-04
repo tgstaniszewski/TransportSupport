@@ -1,0 +1,60 @@
+﻿@model TransportSupport.Models.Contractor
+
+
+
+
+<h4 class="btn-primary text-center" >Kontrahent</h4>
+<hr />
+<div class="row ">
+    <div class="col-md-6 offset-md-3">
+        <form asp-action="Edit" >
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="ID" />
+            <div class="form-group" style="text-align: center">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group" style="text-align: center">
+                <label asp-for="Street" class="control-label"></label>
+                <input asp-for="Street" class="form-control" />
+                <span asp-validation-for="Street" class="text-danger"></span>
+            </div>
+            <div class="form-group" style="text-align: center">
+                <label asp-for="PostCode" class="control-label"></label>
+                <input asp-for="PostCode" class="form-control" />
+                <span asp-validation-for="PostCode" class="text-danger"></span>
+            </div>
+            <div class="form-group" style="text-align: center">
+                <label asp-for="City" class="control-label"></label>
+                <input asp-for="City" class="form-control" />
+                <span asp-validation-for="City" class="text-danger"></span>
+            </div>
+            <div class="form-group" style="text-align: center">
+                <label asp-for="NIP" class="control-label"></label>
+                <input asp-for="NIP" class="form-control" />
+                <span asp-validation-for="NIP" class="text-danger"></span>
+            </div>
+            <div class="form-group" style="text-align: center">
+                <label asp-for="Email" class="control-label"></label>
+                <input asp-for="Email" type="email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="form-group" style="text-align: center">
+                <label asp-for="Phone" class="control-label"></label>
+                <input asp-for="Phone" type="tel" class="form-control" />
+                <span asp-validation-for="Phone" class="text-danger"></span>
+            </div>
+            <div class="form-group" style="text-align: center">
+                <input type="submit" value="Zapisz" class="btn btn-success" />
+                <a class="btn btn-primary" asp-action="Index">Anuluj</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+
+
+

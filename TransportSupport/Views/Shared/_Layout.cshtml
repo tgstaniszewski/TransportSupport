@@ -1,0 +1,125 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - TransportSupport</title>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css" integrity="sha384-5sAR7xN1Nv6T6+dT2mhtzEpVJvfS3NScPQTrOxhwjIuvcA67KV2R5Jz6kr4abQsz" crossorigin="anonymous">
+
+    <environment include="Development">
+        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrapSpacelab.css" />
+        <link rel="stylesheet" href="~/css/site.css" />
+    </environment>
+    <environment exclude="Development">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+              asp-fallback-href="~/lib/bootstrap/dist/css/bootstrap.min.css"
+              asp-fallback-test-class="sr-only" asp-fallback-test-property="position" asp-fallback-test-value="absolute" />
+        <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
+    </environment>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="##navbarSupportedContent" aria-controls="#navbarSupportedContent" aria-expanded="true" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto ">
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <li class="nav-item active">
+                        <a class="nav-link" href="@Url.Action("Index", "Calendar")"> <img style="display:block" src="~/images/038-calendar-4.png" alt="Kalendarz" />Kalendarz <br /> Frachtów <span class="sr-only">(current)</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="@Url.Action("Index", "Invoices")">
+                            <img style="display:block" src="~/images/036-dollar-bill.png" alt="Faktury" />Faktury
+
+
+                            @if (ViewBag.newInvoicesCount > 0)
+                            {
+                                <span class="badge badge-success">@ViewBag.newInvoicesCount</span>
+                            }
+
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="@Url.Action("Index", "Contractors")">
+                            <img style="display:block" src="~/images/032-user.png" alt="Kontrahenci" />Kontrahenci
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="@Url.Action("Index", "Companies")">
+                            <img style="display:block" src="~/images/031-archives.png" alt="Dane Firmy" />Dane firmy
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="@Url.Action("Index", "Tracks")">
+                            <img style="display:block" src="~/images/025-map-1.png" alt="Kursy" />Kursy
+                        </a>
+                    </li>
+                }
+            </ul>
+            <ul class="nav navbar-nav my-2 my-lg-0">
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <li><a class="nav-link" href="">Witaj @User.Identity.Name,</a></li>
+                    <li>
+                        <a  class="nav-link" asp-area="" asp-controller="Account" asp-action="Logout">
+                            <img style="display:block" src="~/images/001-logout.png" alt="LogOut" />Wyloguj
+                        </a>
+                    </li>
+                }
+                else
+                {                    
+                    <li><a asp-area="" asp-controller="Account" asp-action="Login"><img style="display:block" src="~/images/002-login.png" alt="LogIn" /> Zaloguj</a></li>
+                    <li><a asp-area="" asp-controller="Account" asp-action="Register"><img style="display:block" src="~/images/003-login-1.png" alt="Register" /> Rejestracja</a></li>
+                }
+            </ul>
+
+        </div>
+    </nav>
+    <div class="container body-content">
+        @if (TempData["Message"] != null)
+        {
+            <div class="message-box">
+                @TempData["Message"]
+            </div>
+        }
+
+        @RenderBody()
+        <hr />
+        <footer>
+            <p>&copy; 2018 - TransportSupport</p>
+        </footer>
+    </div>
+
+    <environment include="Development">
+        <script src="~/lib/jquery/dist/jquery.js"></script>
+        <script src="~/lib/bootstrap/dist/js/bootstrap4.1.3.min.js"></script>
+
+        <script src="~/js/site.js" asp-append-version="true"></script>
+    </environment>
+    <environment exclude="Development">
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"
+                asp-fallback-src="~/lib/jquery/dist/jquery.min.js"
+                asp-fallback-test="window.jQuery"
+                crossorigin="anonymous"
+                integrity="sha384-K+ctZQ+LL8q6tP7I94W+qzQsfRV2a+AfHIi9k8z8l9ggpc8X+Ytst4yBo/hH+8Fk">
+        </script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootswatch/4.1.3/spacelab/bootstrap.min.css"
+                asp-fallback-src="~/lib/bootstrap/dist/js/bootstrap4.1.3.min.js"
+                asp-fallback-test="window.jQuery && window.jQuery.fn && window.jQuery.fn.modal"
+                crossorigin="anonymous"
+                integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa">
+        </script>
+
+
+        <script src="~/js/site.min.js" asp-append-version="true"></script>
+    </environment>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
