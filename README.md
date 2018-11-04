@@ -34,4 +34,5 @@ ToDoList:
 - Widok szczególowy frachtu z kalendarza
 - Widok dla wydruku faktury
 - zwiększenie możliwości trwania kursu ponad 24h
+- rozbudowa aplikacji o zarządznie pojazdami( ewidencja ubezpieczeń, przeglądów, uwzględnienie pojazdu w frachcie)
 
