@@ -10,19 +10,16 @@
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="row">
 
-            <div class="form-group col-xl-3">
+            <div class="form-group col">
                 <label asp-for="InvoiceNumber" class="control-label"></label>
-                <input id="numberInvoice" asp-for="InvoiceNumber" class="form-control" />
+                <input id="numberInvoice" asp-for="InvoiceNumber" readonly class="form-control" />
                 <span asp-validation-for="InvoiceNumber" class="text-danger"></span>
             </div>
-            <div class="form-group col-xl-3">
+            <div class="form-group col">
                 <label asp-for="InvoiceDate" class="control-label"></label>
-                <input asp-for="InvoiceDate" class="form-control" value="@string.Format("{0:yyyy-MM-dd}", Model.InvoiceDate)" />
+                <input asp-for="InvoiceDate" readonly class="form-control" value="@string.Format("{0:yyyy-MM-dd}", Model.InvoiceDate)" />
                 <span asp-validation-for="InvoiceDate" class="text-danger"></span>
             </div>
-
-        </div>
-        <div class="row">
 
             <div class="form-group col">
 
@@ -30,6 +27,9 @@
                 <select asp-for="CompanyId" class="form-control " asp-items="ViewBag.Company"></select>
 
             </div>
+
+        </div>
+        <div class="row">
 
             <div class="form-group col">
 
@@ -132,130 +132,148 @@
             var contractorSelect = $('#contractorId'); // pole wyboru kontrahenta
             var tbodyFreight = $('#freightTable'); //tabela z frachtami
             var tbodyTotal = $("#tbodyTotal"); //tabela podsumowania
+            var table = $('table');
             var buttonCreate = $("#createInvoice"); //przycisk dodawania faktury
+            table.hide();//ukrycie podgladu faktury
 
             //wybranie kontrahenta i wyświetlanie listy frachtów wraz z podsumowaniem!!!!
             contractorSelect.on("change",
                 function () {
-                    var contractorId = contractorSelect.val();
-                    $.ajax({
-                        type: "GET",
-                        url: `GetFreightInvoicesNull/${contractorId}`,
-                        contentType: "application/json; charset=utf-8",
-                        dataType: "json",
-                        //data: customerSelect.value,
-                        success: function (data) {
-                            var counter = 0;
-                            var totalNetto = 0; //suma netto do podsumowania
-                            var totalBrutto = 0; //suma Brutto do podsumowania
-
-                            var trTotal = document.createElement("tr");
+                    if (contractorSelect.val() == "") {
+                        tbodyFreight.empty();
+                        table.hide();//ukrycie zestawienia faktury
+                    } else {
 
 
-                            data.forEach(function (item) {
-                                //wybór ilości w zależnoći od jednostki miary
-                                var choiseAmount = function (item) {
 
-                                    if (item.unitOfMeasure === "szt") {
-                                        return 1;
-                                    } else if (item.unitOfMeasure === "/km") {
+                        tbodyFreight.empty();//wyczyszcenie zetawienia faktury
 
-                                        return item.distance;
-                                    }
+                        var contractorId = contractorSelect.val();
 
-                                    return "";
-                                };
+                        $.ajax({
+                            type: "GET",
+                            url: `GetFreightInvoicesNull/${contractorId}`,
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            //data: customerSelect.value,
+                            success: function (data) {
 
-                                //rekordy tabeli z frachtami
-                                var tr = document.createElement("tr");
-                                counter++;
+                                table.show();
+                                var counter = 0;
+                                var totalNetto = 0; //suma netto do podsumowania
+                                var totalBrutto = 0; //suma Brutto do podsumowania
 
-                                var lp = document.createElement("td");
-                                lp.innerHTML = counter;
-                                tr.append(lp);
+                                var trTotal = document.createElement("tr");
 
-                                var name = document.createElement("td");
-                                name.innerHTML = item.name;
-                                tr.append(name);
 
-                                var unitOfMeasure = document.createElement("td");
-                                unitOfMeasure.innerHTML = item.unitOfMeasure;
-                                tr.append(unitOfMeasure);
+                                data.forEach(function (item) {
+                                    //wybór ilości w zależnoći od jednostki miary
+                                    var choiseAmount = function (item) {
 
-                                var amount = document.createElement("td");
-                                amount.innerHTML = choiseAmount(item);
-                                tr.append(amount);
+                                        if (item.unitOfMeasure === "szt") {
+                                            return 1;
+                                        } else if (item.unitOfMeasure === "/km") {
 
-                                var price = document.createElement("td");
-                                price.innerHTML = item.price + " zł";
-                                tr.append(price);
+                                            return item.distance;
+                                        }
 
-                                var priceNetto = document.createElement("td");
-                                priceNetto.innerHTML = item.price * choiseAmount(item) + " zł";
-                                totalNetto += item.price * choiseAmount(item);
-                                tr.append(priceNetto);
+                                        return "";
+                                    };
+
+                                    //rekordy tabeli z frachtami
+                                    var tr = document.createElement("tr");
+                                    counter++;
+
+                                    var lp = document.createElement("td");
+                                    lp.innerHTML = counter;
+                                    tr.append(lp);
+
+                                    var name = document.createElement("td");
+                                    name.innerHTML = item.name;
+                                    tr.append(name);
+
+                                    var unitOfMeasure = document.createElement("td");
+                                    unitOfMeasure.innerHTML = item.unitOfMeasure;
+                                    tr.append(unitOfMeasure);
+
+                                    var amount = document.createElement("td");
+                                    amount.innerHTML = choiseAmount(item);
+                                    tr.append(amount);
+
+                                    var price = document.createElement("td");
+                                    price.innerHTML = item.price + " zł";
+                                    tr.append(price);
+
+                                    var priceNetto = document.createElement("td");
+                                    priceNetto.innerHTML = item.price * choiseAmount(item) + " zł";
+                                    totalNetto += item.price * choiseAmount(item);
+                                    tr.append(priceNetto);
+
+                                    var valueTax = document.createElement("td");
+                                    valueTax.innerHTML = "23%";
+                                    tr.append(valueTax);
+
+                                    var tax = document.createElement("td");
+                                    tax.innerHTML =
+                                        Math.round((item.price * 0.23 * choiseAmount(item)) * 100) / 100 + " zł";
+                                    tr.append(tax);
+
+                                    var priceBrutto = document.createElement("td");
+                                    priceBrutto.innerHTML =
+                                        Math.round((item.price * choiseAmount(item) + (item.price * 0.23)) * 100) / 100 +
+                                        " zł";
+                                    totalBrutto += item.price * choiseAmount(item) + (item.price * 0.23);
+                                    tr.append(priceBrutto);
+
+                                    tbodyFreight.append(tr);
+                                });
+
+                                //podsumowanie Tabeli
+                                tbodyTotal.empty();
+
+                                var SumarryText = document.createElement("td");
+                                SumarryText.innerHTML = "Razem";
+                                trTotal.append(SumarryText);
+
+                                var netto = document.createElement("td");
+                                netto.innerHTML = totalNetto + " zł";
+                                trTotal.append(netto);
 
                                 var valueTax = document.createElement("td");
                                 valueTax.innerHTML = "23%";
-                                tr.append(valueTax);
+                                trTotal.append(valueTax);
 
-                                var tax = document.createElement("td");
-                                tax.innerHTML =
-                                    Math.round((item.price * 0.23 * choiseAmount(item)) * 100) / 100 + " zł";
-                                tr.append(tax);
+                                var brutto = document.createElement("td");
+                                brutto.innerHTML = totalBrutto + " zł";
+                                trTotal.append(brutto);
 
-                                var priceBrutto = document.createElement("td");
-                                priceBrutto.innerHTML =
-                                    Math.round((item.price * choiseAmount(item) + (item.price * 0.23)) * 100) / 100 +
-                                    " zł";
-                                totalBrutto += item.price * choiseAmount(item) + (item.price * 0.23);
-                                tr.append(priceBrutto);
+                                tbodyTotal.append(trTotal);
 
-                                tbodyFreight.append(tr);
-                            });
+                            },
+                            error: function (data) {
+                                console.log("błąd odbioru frachtó do faktury" + data);
+                            }
 
-                            //podsumowanie Tabeli
-                            var SumarryText = document.createElement("td");
-                            SumarryText.innerHTML = "Razem";
-                            trTotal.append(SumarryText);
-
-                            var netto = document.createElement("td");
-                            netto.innerHTML = totalNetto + " zł";
-                            trTotal.append(netto);
-
-                            var valueTax = document.createElement("td");
-                            valueTax.innerHTML = "23%";
-                            trTotal.append(valueTax);
-
-                            var brutto = document.createElement("td");
-                            brutto.innerHTML = totalBrutto + " zł";
-                            trTotal.append(brutto);
-
-                            tbodyTotal.append(trTotal);
-
-                        },
-                        error: function (data) {
-                            console.log("błąd odbioru frachtó do faktury" + data);
-                        }
-
-                    });
+                        });
 
 
-                    $.ajax({
-                        type: "GET",
-                        url: `GetNumberIvoice`,
-                        contentType: "application/json; charset=utf-8",
-                        //data: customerSelect.value,
-                        success: function (data) {
+                        $.ajax({
+                            type: "GET",
+                            url: `GetNumberIvoice`,
+                            contentType: "application/json; charset=utf-8",
+                            //data: customerSelect.value,
+                            success: function (data) {
 
-                            $("#numberInvoice").val(data);
-                        },
-                        error: function () {
-                            console.log("błąd odbioru numeru faktury");
-                        }
+                                $("#numberInvoice").val(data);
+                            },
+                            error: function () {
+                                console.log("błąd odbioru numeru faktury");
+                            }
 
 
-                    });
+                        });
+
+                    }
 
 
                 });

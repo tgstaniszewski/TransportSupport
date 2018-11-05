@@ -52,3 +52,9 @@ h1 {
     text-align: center;
     color: #fff;
 }
+
+thead {
+    color: #fff;
+    background-color: #446E9B;
+    border-color: #446E9B;
+}
